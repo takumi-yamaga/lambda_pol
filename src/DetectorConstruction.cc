@@ -41,7 +41,9 @@
 
 #include "G4VSolid.hh"
 #include "G4Box.hh"
+#include "G4Sphere.hh"
 #include "G4Tubs.hh"
+#include "G4RotationMatrix.hh"
 #include "G4LogicalVolume.hh"
 #include "G4VPhysicalVolume.hh"
 #include "G4PVPlacement.hh"
@@ -118,50 +120,50 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     = new G4Box("targetBox",target_size_x/2.,target_size_y/2.,target_thickness/2.);
   auto targetLogical
     = new G4LogicalVolume(targetSolid,vacuum,"targetLogical");
-  auto targetPhysical
-    = new G4PVPlacement(0,G4ThreeVector(),targetLogical,"targetPhysical",
-        worldLogical,false,0,checkOverlaps);
+  //auto targetPhysical
+  //  = new G4PVPlacement(0,G4ThreeVector(),targetLogical,"targetPhysical",
+  //      worldLogical,false,0,checkOverlaps);
 
   // drift chamber (in)
-  auto dc_size_x = target_size_x;
-  auto dc_size_y = target_size_y;
+  auto dc_size_r = 10.*cm;
   auto dc_thickness = 1.*mm;
-  auto dcin_position = G4ThreeVector(0.,0.,-(target_thickness/2.+dc_thickness/2.+kSpace));
-  auto dcin_Solid 
-    = new G4Box("dcin_Box",dc_size_x/2.,dc_size_y/2.,dc_thickness/2.);
-  auto dcin_Logical
-    = new G4LogicalVolume(dcin_Solid,air,"dcin_Logical");
-  auto dcin_Physical
-    = new G4PVPlacement(0,dcin_position,dcin_Logical,"dcin_Physical",
+  auto dcin_position = G4ThreeVector(0.,0.,0.);
+  auto dcin_solid 
+    = new G4Sphere("dcin_sphere",dc_size_r-dc_thickness/2.,dc_size_r+dc_thickness/2.,0.*degree,180.*degree,1.*degree,179.*degree);
+  auto dcin_logical
+    = new G4LogicalVolume(dcin_solid,air,"dcin_logical");
+  auto dcin_physical
+    = new G4PVPlacement(0,dcin_position,dcin_logical,"dcin_physical",
         worldLogical,false,0,checkOverlaps);
   // wireplane
   auto dc_wireplane_thickness = 1.*nm;
   auto dcin_wireplane_solid
-    = new G4Box("dcin_wireplane_box", dc_size_x/2., dc_size_y/2., dc_wireplane_thickness/2.);
+    = new G4Sphere("dcin_wireplane_sphere", dc_size_r-dc_wireplane_thickness/2., dc_size_r+dc_wireplane_thickness/2., 0.*degree,180.*degree,1.*degree,179.*degree);
   dcin_wireplane_logical_
     = new G4LogicalVolume(dcin_wireplane_solid,argonGas,"dcin_wireplane_logical");
   auto dcin_wireplane_physical
     = new G4PVPlacement(0,G4ThreeVector(),dcin_wireplane_logical_,"dcin_wireplane_physical",
-        dcin_Logical, false,0,checkOverlaps);
+        dcin_logical, false,0,checkOverlaps);
 
   // drift chamber (out)
-  auto dcout_position = -dcin_position;
-  auto dcout_Solid 
-    = new G4Box("dcout_Box",dc_size_x/2.,dc_size_y/2.,dc_thickness/2.);
-  auto dcout_Logical
-    = new G4LogicalVolume(dcout_Solid,air,"dcout_Logical");
-  auto dcout_Physical
-    = new G4PVPlacement(0,dcout_position,dcout_Logical,"dcout_Physical", 
-        worldLogical, false,0,checkOverlaps);
+  auto dcout_position = G4ThreeVector(0.,0.,0.);
+  G4RotationMatrix* dcout_rotation = new G4RotationMatrix();
+  dcout_rotation->rotateZ(180.*degree);
+  auto dcout_solid 
+    = new G4Sphere("dcout_sphere",dc_size_r-dc_thickness/2.,dc_size_r+dc_thickness/2.,0.*degree,180.*degree,1.*degree,179.*degree);
+  auto dcout_logical
+    = new G4LogicalVolume(dcout_solid,air,"dcout_logical");
+  auto dcout_physical
+    = new G4PVPlacement(dcout_rotation,dcout_position,dcout_logical,"dcout_physical",
+        worldLogical,false,0,checkOverlaps);
   // wireplane
   auto dcout_wireplane_solid
-    = new G4Box("dcout_wireplane_box", dc_size_x/2., dc_size_y/2., dc_wireplane_thickness/2.);
+    = new G4Sphere("dcout_wireplane_sphere", dc_size_r-dc_wireplane_thickness/2., dc_size_r+dc_wireplane_thickness/2., 0.*degree,180.*degree,1.*degree,179.*degree);
   dcout_wireplane_logical_
     = new G4LogicalVolume(dcout_wireplane_solid,argonGas,"dcout_wireplane_logical");
   auto dcout_wireplane_physical
     = new G4PVPlacement(0,G4ThreeVector(),dcout_wireplane_logical_,"dcout_wireplane_physical",
-        dcout_Logical, false,0,checkOverlaps);
-
+        dcout_logical, false,0,checkOverlaps);
 
   // visualization attributes ------------------------------------------------
 
@@ -175,8 +177,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   fVisAttributes.push_back(visAttributes);
 
   visAttributes = new G4VisAttributes(G4Colour::Yellow());
-  dcin_Logical->SetVisAttributes(visAttributes);
-  dcout_Logical->SetVisAttributes(visAttributes);
+  dcin_logical->SetVisAttributes(visAttributes);
+  dcout_logical->SetVisAttributes(visAttributes);
   fVisAttributes.push_back(visAttributes);
 
   visAttributes = new G4VisAttributes(G4Colour::Green());
