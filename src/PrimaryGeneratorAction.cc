@@ -80,10 +80,10 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
   auto ekin = std::sqrt(pp*pp+mass*mass)-mass;
   particlegun_->SetParticleEnergy(ekin);
 
-  auto direction = G4ThreeVector(0.,0.,1.);
+  auto direction = G4ThreeVector(0.,0.,0.);
   particlegun_->SetParticleMomentumDirection(direction);
 
-  auto polarization = G4ThreeVector(0.,0.,0.);
+  auto polarization = G4ThreeVector(0.,1.,0.);
   particlegun_->SetParticlePolarization(polarization);
 
   particlegun_->GeneratePrimaryVertex(event);
